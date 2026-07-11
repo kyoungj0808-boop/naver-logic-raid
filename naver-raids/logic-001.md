@@ -1,15 +1,13 @@
-원본
+원본코드
 import sys
 import unittest
 
 from webkitpy.common.system import outputcapture
 from webkitpy.common.system import stack_utils
 
-
 def current_thread_id():
     thread_id, _ = sys._current_frames().items()[0]
     return thread_id
-
 
 class StackUtilsTest(unittest.TestCase):
     def test_find_thread_stack_found(self):
@@ -23,27 +21,21 @@ class StackUtilsTest(unittest.TestCase):
 
     def test_log_thread_state(self):
         msgs = []
-
         def logger(msg):
             msgs.append(msg)
-
         thread_id = current_thread_id()
-        stack_utils.log_thread_state(logger, "test-thread", thread_id,
-                                     "is tested")
+        stack_utils.log_thread_state(logger, "test-thread", thread_id, "is tested")
         self.assertTrue(msgs)
 
     def test_log_traceback(self):
         msgs = []
-
         def logger(msg):
             msgs.append(msg)
-
         try:
             raise ValueError
         except:
             stack_utils.log_traceback(logger, sys.exc_info()[2])
         self.assertTrue(msgs)
-
 except:가 모든 예외를 은폐하는 동안, 테스트는 에러 타입·상태·결과의 정확성을 검증하지 않은 채 단순히 출력 여부만 확인한다. 
 결국 핵심 로직이 깨져도 통과할 수 있는 전형적인 거짓 양성(False Positive) 테스트다.
 
