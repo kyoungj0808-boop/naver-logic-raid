@@ -5,9 +5,11 @@ import unittest
 from webkitpy.common.system import outputcapture
 from webkitpy.common.system import stack_utils
 
+
 def current_thread_id():
     thread_id, _ = sys._current_frames().items()[0]
     return thread_id
+
 
 class StackUtilsTest(unittest.TestCase):
     def test_find_thread_stack_found(self):
@@ -21,16 +23,21 @@ class StackUtilsTest(unittest.TestCase):
 
     def test_log_thread_state(self):
         msgs = []
+
         def logger(msg):
             msgs.append(msg)
+
         thread_id = current_thread_id()
-        stack_utils.log_thread_state(logger, "test-thread", thread_id, "is tested")
+        stack_utils.log_thread_state(logger, "test-thread", thread_id,
+                                     "is tested")
         self.assertTrue(msgs)
 
     def test_log_traceback(self):
         msgs = []
+
         def logger(msg):
             msgs.append(msg)
+
         try:
             raise ValueError
         except:
