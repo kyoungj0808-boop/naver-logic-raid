@@ -852,27 +852,99 @@ logger = logging.getLogger("PQ_EVAL_ENGINE")
 
 
 # =====================================================
-# Runtime Configuration
+# Runtime Configuration (Hardened)
 # =====================================================
 
-MAX_WORKERS = int(
-    os.getenv("PQ_MAX_WORKERS", "8")
+def get_env_int(
+        key,
+        default,
+        minimum=None,
+        maximum=None):
+
+    """
+    Safe environment integer loader.
+
+    Prevents engine boot failure caused by:
+    - invalid string values
+    - negative values
+    - excessive resource allocation
+    """
+
+    try:
+
+        value = int(
+            os.getenv(
+                key,
+                str(default)
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        logger.warning(
+            f"Invalid environment value: {key}. "
+            f"Using default={default}"
+        )
+
+        return default
+
+
+    if minimum is not None and value < minimum:
+
+        logger.warning(
+            f"{key}={value} below minimum={minimum}. "
+            f"Clamped."
+        )
+
+        value = minimum
+
+
+    if maximum is not None and value > maximum:
+
+        logger.warning(
+            f"{key}={value} above maximum={maximum}. "
+            f"Clamped."
+        )
+
+        value = maximum
+
+
+    return value
+
+
+
+MAX_WORKERS = get_env_int(
+    "PQ_MAX_WORKERS",
+    8,
+    minimum=1,
+    maximum=multiprocessing.cpu_count()
 )
 
-MAX_RETRY = int(
-    os.getenv("PQ_MAX_RETRY", "3")
+
+MAX_RETRY = get_env_int(
+    "PQ_MAX_RETRY",
+    3,
+    minimum=0,
+    maximum=10
 )
 
-WORKER_TIMEOUT = int(
-    os.getenv("PQ_WORKER_TIMEOUT", "300")
+
+WORKER_TIMEOUT = get_env_int(
+    "PQ_WORKER_TIMEOUT",
+    300,
+    minimum=10,
+    maximum=3600
 )
+
 
 
 # =====================================================
 # Error Classification
 # =====================================================
 
-# 재시도 가능한 장애
 RETRYABLE_ERRORS = (
     OSError,
     RuntimeError,
@@ -880,12 +952,12 @@ RETRYABLE_ERRORS = (
 )
 
 
-# 데이터 자체가 깨진 경우
 FATAL_ERRORS = (
     KeyError,
     ValueError,
     TypeError,
 )
+
 
 
 # =====================================================
@@ -984,7 +1056,6 @@ def safe_pq_worker(
 
     try:
 
-
         result = pq_compute_single_core(
             proc_id,
             annotation_set,
@@ -1070,7 +1141,6 @@ def pq_compute_multi_core(
 
     try:
 
-
         pool = multiprocessing.Pool(
             processes=len(chunks)
         )
@@ -1100,6 +1170,7 @@ def pq_compute_multi_core(
             )
 
 
+
         worker_results = []
 
 
@@ -1111,14 +1182,12 @@ def pq_compute_multi_core(
                     timeout=WORKER_TIMEOUT
                 )
 
-
                 worker_results.append(
                     result
                 )
 
 
             except multiprocessing.TimeoutError:
-
 
                 logger.critical(
                     f"[Worker-{proc_id}] TIMEOUT"
@@ -1127,9 +1196,7 @@ def pq_compute_multi_core(
                 raise
 
 
-
             except Exception as e:
-
 
                 logger.critical(
                     f"[Worker-{proc_id}] FAILED : {e}"
@@ -1139,7 +1206,6 @@ def pq_compute_multi_core(
 
 
 
-        # 모든 worker 성공 이후 merge
         pq_stat = PQStat()
 
 
@@ -1178,7 +1244,7 @@ def pq_compute_multi_core(
 
 
         raise
-
+        
 최종 개선사항
 ✅ except Exception → 예외 종류별 처리 (KeyError, RuntimeError, TimeoutError 분리)
 ✅ 데이터 오류는 즉시 중단, 시스템 오류만 Retry
