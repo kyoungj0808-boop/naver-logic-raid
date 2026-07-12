@@ -46,7 +46,7 @@ class StackUtilsTest(unittest.TestCase):
 except:가 모든 예외를 은폐하는 동안, 테스트는 에러 타입·상태·결과의 정확성을 검증하지 않은 채 단순히 출력 여부만 확인한다. 
 결국 핵심 로직이 깨져도 통과할 수 있는 전형적인 거짓 양성(False Positive) 테스트다.
 
-제안본
+제안 패치
 import sys
 import threading
 import unittest
