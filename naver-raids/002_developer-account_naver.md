@@ -610,22 +610,9 @@ def confirm_gw_add_completion(ip, port, serviced_num_clnt, serviced_ops):
         else:
             sys.exit(1)
 
-
-
-
-
-
-
 모든 예외를 `except:`로 은폐한 채 단순히 `False`만 반환해 실패 원인과 장애 맥락을 호출자에게 전달하지 못하므로, 네트워크 장애와 내부 로직 오류를 동일한 실패로 취급하는 전형적인 '침묵하는 장애(Silent Failure)' 유발 코드다.
 
-
-
-
-
-
-
-
-제안
+제안 패치
 import logging
 
 logger = logging.getLogger(__name__)
