@@ -100,13 +100,13 @@ class StackUtilsTest(unittest.TestCase):
 
 
 최종 개선 사항
-except: → except ValueError:로 변경
-threading.get_ident() 사용으로 현재 스레드 식별 의도 명확화
-assertTrue(msgs) 대신 출력 계약(Contract) 검증
-Traceback, ValueError, Test Exception까지 확인
-Assertion 실패 메시지 추가
-미사용 변수 제거
-startswith() 대신 assertIn() 사용으로 포맷 변경에 더 유연하게 대응
-Docstring 추가로 테스트 의도 명확화        
+✅ except: → except ValueError:로 변경
+✅ threading.get_ident() 사용으로 현재 스레드 식별 의도 명확화
+✅ assertTrue(msgs) 대신 출력 계약(Contract) 검증
+✅ Traceback, ValueError, Test Exception까지 확인
+✅ Assertion 실패 메시지 추가
+✅ 미사용 변수 제거
+✅ startswith() 대신 assertIn() 사용으로 포맷 변경에 더 유연하게 대응
+✅ Docstring 추가로 테스트 의도 명확화
 
 원본 테스트의 구조와 의도는 유지하면서, 예외 처리·출력 계약(Contract) 검증·가독성을 강화해 테스트 신뢰성과 유지보수성을 모두 향상시킨 균형 잡힌 리팩터링이다.
