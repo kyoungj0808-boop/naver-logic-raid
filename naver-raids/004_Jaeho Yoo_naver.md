@@ -1282,27 +1282,14 @@ class Connection(object):
             self._opened = False
             self._sessionHandle = None
 
-최종 개선 사항 ✅
+최종 개선사항
+✅ Exception 대신 RuntimeError 등 의미가 더 명확한 예외 사용
+✅ subprocess.run()과 timeout 적용으로 외부 프로세스 무한 대기 방지
+✅ logging 기반 오류 기록으로 장애 원인 추적성 향상
+✅ os.path.commonpath() 기반 Path Traversal 방어 추가
+✅ CREATE_SCRIPT_TIMEOUT 상수화로 운영 정책 관리 용이
+✅ 기존 force_remove() 및 클래스 인터페이스 유지로 WebKit 호환성 보존
+✅ 원본의 동작 흐름은 유지하면서 운영 안정성과 보안만 최소 변경으로 보강
+✅ cwd 옵션 사용으로 os.chdir() 의존 제거 및 작업 디렉터리 관리 안정화
 
-✅ Lock → RLock으로 변경하여 재진입 가능한 인증 갱신 구조 확보
-→ Kerberos 인증 과정에서 동일 스레드 재접근 시 교착 가능성 완화
-✅ 인증 상태 추적 변수 추가 (_healthy, _last_auth_failure)
-→ 단순 Exception 발생이 아닌 세션 이상 상태 기록 및 복구 판단 기반 마련
-✅ 인증 객체 교체 방식을 Atomic Swap 형태로 변경
-→ 신규 Kerberos Client 생성 실패 시 기존 정상 인증 상태 보존
-✅ 인증 실패 시 _mark_unhealthy() 호출 추가
-→ 장애 발생 위치와 시간을 기록하여 장애 분석 및 복구 루틴 연계 가능
-✅ Thrift 통신 보호 Decorator(safe_thrift_operation) 추가
-→ 통신 계층 예외를 격리하고 엔진 전체 셧다운 방지
-✅ Thrift 장애 발생 시 Connection 상태 비정상 처리 추가
-→ 단순 예외 전달이 아닌 연결 객체 Health 상태 관리
-✅ auth_lock.acquire()에 timeout 추가
-→ 무한 대기 방지 및 Lock 장애 상황 명확화
-✅ Operation Cleanup 실패 처리 강화
-→ CloseOperation 실패가 전체 Cursor 종료 실패로 이어지지 않도록 예외 격리
-✅ finally 기반 로컬 상태 정리 보장
-→ 서버 종료 성공 여부와 관계없이 _operationHandle, _sessionHandle 등 로컬 리소스 일관성 유지
-✅ Connection close 과정의 네트워크 오류와 리소스 정리를 분리
-→ 원격 종료 실패가 로컬 엔진 상태 오염으로 이어지는 문제 방지
-✅ 예외 발생 시 상세 로그 기록 추가
-→ 장애 원인 추적 가능성 향상 및 운영 환경 디버깅 강화
+원본의 검증된 설계와 호환성을 그대로 유지하면서, 운영 환경에서 발생할 수 있는 장애·보안·디버깅 이슈를 최소한의 수정으로 보완해 프로덕션 운용 품질을 높인 유지보수 중심의 현대화 패치입니다.
