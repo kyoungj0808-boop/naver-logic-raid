@@ -632,7 +632,6 @@ class SandboxExecutor:
         return -1, {"status": "api_error"}
 
 최종 개선사항
-최종 개선사항
 
 ✅ 원본의 핵심 판별 로직(약 400줄)을 유지하면서 응답 판별부(_parse_response)를 별도 메서드로 분리하는 구조 마련
 ✅ ThreadPoolExecutor와 Semaphore를 실행 제어 객체 내부로 통합하여 병렬 실행 책임을 캡슐화
