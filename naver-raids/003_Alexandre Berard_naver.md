@@ -1066,19 +1066,16 @@ class DistributedOrchestrator:
                     signal.SIGKILL
                 )
 
-✅ 단순 MultiprocessingStatus 의존 구조 → DistributedOrchestrator 기반 생명주기 관리 구조로 분리하여 프로세스 관리 책임과 학습 로직 책임 분리
-✅ 단일 메인 루프 감시 방식 → 독립 Watchdog Thread 기반 감시 체계로 변경하여 메인 프로세스 Block 및 무한 대기 위험 제거
-✅ 프로세스 종료 감지(is_alive)와 학습 진행 감지(Heartbeat + Step Progress)를 병합하여 NCCL/CUDA Hang 상태까지 탐지 가능하도록 개선
-✅ Worker 내부 상태 공유용 heartbeat, progress 추가로 "살아있지만 멈춘 프로세스(Ghost Hang)" 판별 가능
-✅ 기존 p.kill() 즉시 종료 방식 → SIGTERM → 대기 → SIGKILL 2단계 Shutdown Pipeline으로 변경하여 Checkpoint 저장 및 NCCL Cleanup 기회 확보
-✅ NCCL_ASYNC_ERROR_HANDLING, NCCL_BLOCKING_WAIT, NCCL_TIMEOUT_MS 환경 강제 설정으로 Collective Operation Deadlock 장기화 방지
-✅ Worker 생성 로직을 worker_entry() Wrapper로 감싸 예외 전파 지점을 단일화하고 장애 발생 Worker 식별 가능하도록 개선
-✅ 기존 전체 Worker 강제 종료 방식 → 실패 원인(failed_reason) 기록 후 단계적 장애 전파 구조로 변경하여 장애 분석 가능성 강화
-✅ except: 전체 예외 삼키기 구조 → Worker 단위 예외 로깅 및 상위 Orchestrator 전달 구조로 변경하여 Silent Failure 제거
-✅ PID 기반 프로세스 관리에서 Rank 기반 장애 추적 구조로 확장하여 분산 환경에서 GPU/RANK 단위 원인 분석 가능
-✅ mp.Process 직접 관리 → Orchestrator 객체 책임 관리로 변경하여 Spawn, Monitoring, Shutdown, Recovery 로직 응집도 향상
-✅ 재시작 가능한 엔진 구조 확보: 장애 감지 → 전체 Worker 종료 → 상태 실패 기록 → Scheduler(SLURM 등)의 재시작 처리 가능
-✅ 프로세스 생존 여부만 확인하던 기존 구조 → Training Progress 기반 Health Check로 변경하여 대규모 GPU 클러스터 환경 대응력 강화
+최종 개선사항
+✅ Exception 남용 최소화 및 오류 의미 명확화
+✅ subprocess.run() + timeout 적용으로 무한 대기 방지
+✅ logging 기반 오류 원인 보존
+✅ Path Traversal 방어(os.path.commonpath) 추가
+✅ 운영 정책 상수화(CREATE_SCRIPT_TIMEOUT)
+✅ 기존 force_remove 및 API 유지로 WebKit 호환성 보존
+✅ 원본 동작을 유지하면서 운영 안정성과 보안만 보강
 ✅ NCCL Zombie Process 및 GPU Memory Lock 위험 감소를 위해 종료 순서를 제어하는 Fault Isolation 계층 추가
 ✅ Checkpoint 저장 중 장애 발생 가능성을 고려한 Graceful Termination 구조 도입으로 데이터 무결성 손상 위험 감소
 ✅ 분산 학습 엔진의 역할을 단순 실행기에서 장애 감지·격리·복구 가능한 Production Grade Controller 구조로 개선
+
+원본의 검증된 설계는 그대로 유지하면서, 운영 환경에서 발생할 수 있는 장애·보안·디버깅 이슈를 최소한의 수정으로 보완해 프로덕션 운용 품질을 높인 현대화 패치입니다.
