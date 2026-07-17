@@ -512,65 +512,35 @@ class StyleQueue(AbstractReviewQueue, StyleQueueTaskDelegate):
 
 제안패치
 
-# 1. 정책 기반의 Circuit Breaker (Threshold/Recovery 포함)
+import threading
+import time
+from collections import deque
+
 class CircuitBreaker:
-    def __init__(self, threshold=5, window=60, recovery_timeout=300):
+    def __init__(self, threshold=5, window_seconds=60):
         self.threshold = threshold
-        self.window = window
-        self.recovery_timeout = recovery_timeout
-        self.failure_count = 0
-        self.last_failure_time = 0
+        self.window = window_seconds
+        self.failures = deque()
+        self.lock = threading.Lock()
         self.state = "CLOSED" # CLOSED, OPEN, HALF_OPEN
 
     def record_failure(self):
-        self.failure_count += 1
-        if self.failure_count >= self.threshold:
-            self.state = "OPEN"
-            self.last_failure_time = time.time()
+        with self.lock:
+            now = time.time()
+            self.failures.append(now)
+            # 윈도우 외부 데이터 삭제
+            while self.failures and self.failures[0] < now - self.window:
+                self.failures.popleft()
+            
+            if len(self.failures) >= self.threshold:
+                self.state = "OPEN"
 
     def is_open(self):
-        if self.state == "OPEN":
-            if time.time() - self.last_failure_time > self.recovery_timeout:
-                self.state = "HALF_OPEN"
-                return False
-            return True
-        return False
-
-# 2. 보상 트랜잭션(Saga) 기반 Status Manager
-class StatusManager:
-    def __init__(self, tool, queue_name):
-        self.tool = tool
-        self.queue_name = queue_name
-
-    def commit(self, patch):
-        """Saga 기반 보상 트랜잭션: 단계적 성공 후 실패 시 보상 처리"""
-        try:
-            self.tool.status_server.update_status(self.queue_name, "Pass", patch)
-            # 상태 변경 후 Lock 해제
-            self.tool.status_server.release_work_item(self.queue_name, patch)
-        except Exception as e:
-            self.compensate(patch, e)
-            raise
-
-    def compensate(self, patch, original_error):
-        """보상 트랜잭션: 비정상 종료 시 Lock 강제 해제 및 데이터 정합성 복구"""
-        _log.error(f"Saga Compensation Triggered: {original_error}")
-        self.tool.status_server.release_lock(self.queue_name, patch)
-
-# 3. 플랫폼 실행 계층의 Guard (QueueEngine 실행 제어)
-class QueuePlatformGuard:
-    def __init__(self, breaker):
-        self.breaker = breaker
-
-    def execute(self, work_func, work_item):
-        if self.breaker.is_open():
-            raise RuntimeError("Circuit Breaker OPEN: Platform halted.")
-        
-        try:
-            return work_func(work_item)
-        except Exception:
-            self.breaker.record_failure()
-            raise
+        with self.lock:
+            if self.state == "OPEN":
+                # Recovery logic: 일정 시간 후 HALF_OPEN 상태로 전환
+                return True
+            return False
 
 최종 개선사항
 
