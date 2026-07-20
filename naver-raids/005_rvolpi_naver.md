@@ -1260,4 +1260,8 @@ def pq_compute_multi_core(
 ✅ print() → 운영용 logging 전환
 ✅ 환경 변수 기반 설정 지원 (MAX_WORKERS, MAX_RETRY, TIMEOUT)
 
-원본은 정상 데이터 계산기, 개선안은 오류 발생 시 잘못된 결과를 내지 않는 평가 엔진
+본 개선은 PQ 계산 알고리즘 자체를 변경하지 않고 Evaluation Infrastructure Layer의 신뢰성을 강화한 Hardening 작업이다.
+
+핵심 목표는 성능 향상이 아니라 평가 결과의 재현성(Reproducibility), 장애 격리(Fault Isolation), 결과 무결성(Result Integrity) 확보이다.
+
+기존 연구용 Script가 "정상 입력과 정상 환경"을 가정한 구조였다면, 개선 구조는 잘못된 데이터·Worker 장애·환경 설정 오류 상황에서도 평가 결과의 신뢰성을 보존하는 Production-grade Evaluation Engine 구조로 전환하는 단계이다.
